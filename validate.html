@@ -102,7 +102,7 @@
             document.getElementById("state_valid").style.display = 'none'; document.getElementById("state_invalid").style.display = 'none';
             document.getElementById("state_invalid_size").style.display = 'none';
             fetch(`https://corsproxy.io/?url=${encodeURIComponent(document.getElementById("url").value)}`,{headers: {"Accept":"*/*"}, redirect: 'error'})
-                .then((response) => response.blob())
+                .then((response) => {if (response.status === 403) throw new Error('403 is unacceptable for me!'); return response.blob()})
                 .then(blob => {
                     var fileReader = new FileReader();
                     fileReader.onloadend = function(e) {
