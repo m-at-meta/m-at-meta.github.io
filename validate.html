@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validate image URLs</title>
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v3.0.0/css/line.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #26479f;
+        }
+        .input-box {
+            position: relative;
+            height: 76px;
+            max-width: 900px;
+            width: 100%;
+            background: #fff;
+            margin: 0 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        .input-box i,
+        .input-box .button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .input-box i {
+            left: 20px;
+            font-size: 30px;
+            color: #707070;
+        }
+        .input-box input {
+            height: 100%;
+            width: 100%;
+            outline: none;
+            font-size: 18px;
+            font-weight: 400;
+            border: none;
+            padding: 0 155px 0 65px;
+            background-color: transparent;
+        }
+        .input-box .button {
+            right: 20px;
+            font-size: 16px;
+            font-weight: 400;
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            background-color: #26479f;
+            cursor: pointer;
+        }
+        .input-box .button:active {
+            transform: translateY(-50%) scale(0.98);
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 500px) {
+            .input-box {
+            height: 66px;
+            margin: 0 8px;
+            }
+            .input-box i {
+            left: 12px;
+            font-size: 25px;
+            }
+            .input-box input {
+            padding: 0 112px 0 50px;
+            }
+            .input-box .button {
+            right: 12px;
+            font-size: 14px;
+            padding: 8px 18px;
+            }
+        }
+    </style>
+  </head>
+  <body>
+    <div class="input-box">
+      <i class="uil uil-image-download"></i>
+      <input type="text" id="url" placeholder="Paste URL here...">
+      <button class="button" id="validate">Validate</button>
+      <div id="state_valid" style="margin: 2em 0em;display: none;justify-content: center;font-size: xx-large;color: lime;">This image URL is valid!</div>
+      <div id="state_invalid" style="margin: 2em 0em;display: none;justify-content: center;font-size: xx-large;color: red;">This image URL is invalid!</div>
+      <div id="state_invalid_size" style="margin: 2em 0em;display: none;justify-content: center;font-size: xx-large;color: red;">This image width and/or height < 1000 pixels!</div>
+    </div>
+    <script>
+        function v(s) {document.getElementById("state_invalid").style.display = s?'none':'flex';document.getElementById("state_valid").style.display = s?'flex':'none';}
+        function vf() {
+            document.getElementById("state_valid").style.display = 'none'; document.getElementById("state_invalid").style.display = 'none';
+            document.getElementById("state_invalid_size").style.display = 'none';
+            fetch(`https://corsproxy.io/?url=${encodeURIComponent(document.getElementById("url").value)}`,{headers: {"Accept":"*/*"}, redirect: 'error'})
+                .then((response) => response.blob())
+                .then(blob => {
+                    var fileReader = new FileReader();
+                    fileReader.onloadend = function(e) {
+                    var arr = (new Uint8Array(e.target.result)).subarray(0, 4);
+                    var header = "";
+                    for(var i = 0; i < arr.length; i++) {header += arr[i].toString(16);}
+                    var valid = false;
+                    switch (header) {
+                        case "89504e47": case "47494638": case "ffd8ffe0": case "ffd8ffe1": case "ffd8ffe2": case "ffd8ffe3": case "ffd8ffe8": case "52494646":
+                            type = "image";valid = true;break;
+                        default:
+                            type = "unknown";
+                            break;
+                        }
+                        const img = new Image()
+                        img.src = URL.createObjectURL(blob)
+                        img.onload = function() {
+                            console.log(img.width, img.height)    
+                            if ((img.width<1000) || (img.height<1000)) {
+                                valid = false;
+                                document.getElementById("state_invalid_size").style.display = 'flex';
+                            }
+                            v(valid);
+                        }
+                    };
+                    fileReader.readAsArrayBuffer(blob);
+                })
+                .catch(error => {v(false);});
+        }
+    </script>
+    <script>document.getElementById("validate").onclick = function onvf(){vf();}</script>
+  </body>
+</html>
